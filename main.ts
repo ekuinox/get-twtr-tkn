@@ -13,6 +13,7 @@ if (clientId == null || clientSecret == null || callbackUrl == null) {
 }
 
 const scopes: auth.OAuth2Scopes[] = [
+    'offline.access',
     'tweet.read',
     'users.read',
     'bookmark.read',
@@ -41,10 +42,15 @@ console.log('enter redirected url');
 const input = createInterface({ input: process.stdin, output: process.stdout });
 
 input.on('line', async (line) => {
-    const params = qs.parse(line.split('?')[1]);
-    await client.requestAccessToken(params['code'] as string);
+    if (client.refresh_token != null) {
+        await client.refreshAccessToken();
+    } else {
+        const params = qs.parse(line.split('?')[1]);
+        await client.requestAccessToken(params['code'] as string);
+    }
     const header = await client.getAuthHeader();
 
     console.log(`Authorization: ${header.Authorization}`);
     console.log(`expires_at: ${client.expires_at}`);
+    console.log(`refresh_token: ${client.refresh_token}`);
 });
